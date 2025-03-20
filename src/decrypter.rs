@@ -1,24 +1,27 @@
-use std::path::{Path, PathBuf};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 use anyhow::Result;
 use phf::phf_map;
 
 use crate::Config;
 
-pub(crate) async fn copy_with_decryption(config: &Config, source: PathBuf) -> Result<()> {
-    let (dest, do_decrypt) = plan(config, &source);
+pub(crate) fn copy_with_decryption(config: &Config, source: &Path) -> Result<()> {
+    let (dest, do_decrypt) = plan(config, source);
 
     if let Some(dest_parent) = dest.parent() {
-        if !tokio::fs::try_exists(dest_parent).await? {
-            tokio::fs::create_dir_all(dest_parent).await?;
+        if !fs::exists(dest_parent)? {
+            fs::create_dir_all(dest_parent)?;
         }
     }
 
     if do_decrypt {
-        let bytes = tokio::fs::read(source).await?;
-        tokio::fs::write(dest, decrypt(&config.masks, bytes)).await?;
+        let bytes = fs::read(source)?;
+        fs::write(dest, decrypt(&config.masks, bytes))?;
     } else {
-        tokio::fs::copy(source, dest).await?;
+        fs::copy(source, dest)?;
     }
 
     Ok(())
