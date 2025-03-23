@@ -18,8 +18,8 @@ pub(crate) fn copy_with_decryption(config: &Config, source: &Path) -> Result<()>
     }
 
     if do_decrypt {
-        let bytes = fs::read(source)?;
-        fs::write(dest, decrypt(&config.masks, bytes))?;
+        let mut bytes = fs::read(source)?;
+        fs::write(dest, decrypt(&config.masks, &mut bytes))?;
     } else {
         fs::copy(source, dest)?;
     }
@@ -47,8 +47,8 @@ static EXT_MAP: phf::Map<&'static str, &'static str> = phf_map! {
     "png_" => "png",
 };
 
-fn decrypt(masks: &[u8], mut bytes: Vec<u8>) -> Vec<u8> {
-    let mut body = bytes.split_off(16); // first 16 bytes are rpg maker's header
+fn decrypt<'a>(masks: &[u8], bytes: &'a mut [u8]) -> &'a [u8] {
+    let body = &mut bytes[16..]; // first 16 bytes are rpg maker's header
     for i in 0..(usize::min(body.len(), masks.len())) {
         body[i] ^= masks[i];
     }
