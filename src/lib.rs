@@ -5,8 +5,8 @@ mod system_json;
 use std::{fs, path::Path};
 
 use anyhow::Result;
-use rayon::prelude::*;
-use walkdir::WalkDir;
+use jwalk::WalkDir;
+use jwalk::rayon::prelude::*;
 
 use config::Config;
 use decrypter::copy_with_decryption;
@@ -17,7 +17,7 @@ pub fn run(config: Config) -> Result<()> {
         .into_iter()
         .par_bridge()
         .flatten()
-        .map(|entry| entry.into_path())
+        .map(|entry| entry.path())
         .filter(|path| path.is_file())
         .try_for_each(|file| copy_with_decryption(&config, &file))?;
 
