@@ -1,18 +1,13 @@
-use std::env;
-use std::path::{Path, PathBuf};
+use std::{env, path::PathBuf};
 
-use anyhow::{Context, Result, anyhow};
-
-use crate::system_json::SystemJson;
+use anyhow::{Context, Result};
 
 pub(crate) struct Config {
     pub(crate) game_dir: PathBuf,
-    pub(crate) dest_root: PathBuf,
-    pub(crate) masks: Vec<u8>,
 }
 
 impl Config {
-    pub(crate) fn new(mut args: env::Args) -> Result<Self> {
+    pub(crate) fn parse(mut args: env::Args) -> Result<Self> {
         args.next();
 
         let game_dir = args
@@ -20,20 +15,6 @@ impl Config {
             .map(PathBuf::from)
             .context("USAGE: decvz <game_dir>")?;
 
-        let dest_root = Self::add_suffix(&game_dir, "_decrypted") //
-            .context("Something went wrong.")?;
-
-        let system_json = SystemJson::new(&game_dir)?;
-
-        let masks = hex::decode(&system_json.encryption_key)
-            .map_err(|e| anyhow!("Invalid encryptionKey: {e}"))?;
-
-        Ok(Self { game_dir, dest_root, masks })
-    }
-
-    fn add_suffix(path: &Path, suffix: &str) -> Option<PathBuf> {
-        let parent = path.parent().unwrap_or(Path::new(""));
-        let file_name = path.file_name()?.to_str()?;
-        Some(parent.join(format!("{file_name}{suffix}")))
+        Ok(Self { game_dir })
     }
 }

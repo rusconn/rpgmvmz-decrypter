@@ -13,7 +13,7 @@ pub(crate) struct SystemJson {
 }
 
 impl SystemJson {
-    pub(crate) fn new(game_dir: &Path) -> Result<SystemJson> {
+    pub(crate) fn read(game_dir: &Path) -> Result<SystemJson> {
         if !game_dir.exists() {
             bail!("{} not exists.", game_dir.display());
         }
