@@ -2,17 +2,27 @@ mod config;
 mod decrypter;
 mod system_json;
 
-use std::{fs, path::Path};
+use std::{env, fs, path::Path, process};
 
 use anyhow::Result;
 use rayon::prelude::*;
 use walkdir::WalkDir;
 
-pub use config::Config;
-use decrypter::copy_with_decryption;
-use system_json::SystemJson;
+use self::{config::Config, decrypter::copy_with_decryption, system_json::SystemJson};
 
-pub fn run(config: Config) -> Result<()> {
+fn main() {
+    let config = Config::new(env::args()).unwrap_or_else(|e| {
+        eprintln!("{e}");
+        process::exit(1);
+    });
+
+    if let Err(e) = run(config) {
+        eprintln!("{e}");
+        process::exit(1);
+    }
+}
+
+fn run(config: Config) -> Result<()> {
     WalkDir::new(&config.game_dir)
         .into_iter()
         .par_bridge()

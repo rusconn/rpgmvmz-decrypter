@@ -5,14 +5,14 @@ use anyhow::{Context, Result, anyhow};
 
 use crate::system_json::SystemJson;
 
-pub struct Config {
+pub(crate) struct Config {
     pub(crate) game_dir: PathBuf,
     pub(crate) dest_root: PathBuf,
     pub(crate) masks: Vec<u8>,
 }
 
 impl Config {
-    pub fn new(mut args: env::Args) -> Result<Self> {
+    pub(crate) fn new(mut args: env::Args) -> Result<Self> {
         args.next();
 
         let game_dir = args
