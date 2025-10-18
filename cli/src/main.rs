@@ -1,5 +1,4 @@
 mod config;
-mod decrypter;
 mod system_json;
 
 use std::{
@@ -13,7 +12,9 @@ use phf::phf_map;
 use rayon::prelude::*;
 use walkdir::WalkDir;
 
-use self::{config::Config, decrypter::Decrypter, system_json::SystemJson};
+use rpgmvmz_decrypter::Decrypter;
+
+use self::{config::Config, system_json::SystemJson};
 
 fn main() {
     let config = Config::parse(env::args()).unwrap_or_else(|e| {
@@ -31,7 +32,7 @@ fn run(config: Config) -> Result<()> {
     let dest_root = add_suffix(&config.game_dir, "_decrypted") //
         .context("Something went wrong.")?;
     let system_json = SystemJson::read(&config.game_dir)?;
-    let decrypter = Decrypter::new(system_json.encryption_key)?;
+    let decrypter = Decrypter::new(&system_json.encryption_key)?;
 
     WalkDir::new(&config.game_dir)
         .into_iter()
