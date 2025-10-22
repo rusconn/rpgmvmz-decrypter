@@ -9,11 +9,10 @@ use std::{
 };
 
 use anyhow::{Context, Result};
-use phf::phf_map;
 use rayon::prelude::*;
 use walkdir::WalkDir;
 
-use rpgmvmz_decrypter::Decrypter;
+use rpgmvmz_decrypter::{Decrypter, ENC_FIELDS, EXT_MAP};
 
 use self::{config::Config, error::AppError, system_json::SystemJson};
 
@@ -89,21 +88,12 @@ fn plan(game_dir: &Path, dest_root: &Path, source: &Path) -> (PathBuf, bool) {
     (dest, do_decrypt)
 }
 
-static EXT_MAP: phf::Map<&'static str, &'static str> = phf_map! {
-    "rpgmvo" => "ogg",
-    "rpgmvm" => "m4a",
-    "rpgmvp" => "png",
-    "ogg_" => "ogg",
-    "m4a_" => "m4a",
-    "png_" => "png",
-};
-
 fn remove_encryption_info(dest_root: &Path) -> Result<(), AppError> {
     let SystemJson { path, mut content, .. } = SystemJson::read(dest_root)?;
 
-    content.remove("hasEncryptedImages");
-    content.remove("hasEncryptedAudio");
-    content.remove("encryptionKey");
+    for field in ENC_FIELDS {
+        content.remove(field);
+    }
 
     fs::write(&path, serde_json::to_string(&content)?)?;
 

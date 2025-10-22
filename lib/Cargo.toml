@@ -6,4 +6,8 @@ license = "MIT"
 
 [dependencies]
 hex = "0.4.3"
+phf = { version = "0.13.1", optional = true, features = ["macros"] }
 thiserror = "2.0.17"
+
+[features]
+file = ["phf"]

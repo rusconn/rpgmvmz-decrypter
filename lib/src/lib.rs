@@ -43,3 +43,20 @@ impl From<FromHexError> for InitError {
         }
     }
 }
+
+#[cfg(feature = "file")]
+pub static EXT_MAP: phf::Map<&'static str, &'static str> = phf::phf_map! {
+    "rpgmvo" => "ogg",
+    "rpgmvm" => "m4a",
+    "rpgmvp" => "png",
+    "ogg_" => "ogg",
+    "m4a_" => "m4a",
+    "png_" => "png",
+};
+
+#[cfg(feature = "file")]
+pub static ENC_FIELDS: [&str; 3] = [
+    "hasEncryptedImages", //
+    "hasEncryptedAudio",
+    "encryptionKey",
+];
