@@ -1,4 +1,5 @@
 mod config;
+mod error;
 mod system_json;
 
 use std::{
@@ -14,7 +15,7 @@ use walkdir::WalkDir;
 
 use rpgmvmz_decrypter::Decrypter;
 
-use self::{config::Config, system_json::SystemJson};
+use self::{config::Config, error::AppError, system_json::SystemJson};
 
 fn main() {
     let config = Config::parse(env::args()).unwrap_or_else(|e| {
@@ -28,11 +29,12 @@ fn main() {
     }
 }
 
-fn run(config: Config) -> Result<()> {
+fn run(config: Config) -> Result<(), AppError> {
     let dest_root = add_suffix(&config.game_dir, "_decrypted") //
         .context("Something went wrong.")?;
     let system_json = SystemJson::read(&config.game_dir)?;
-    let decrypter = Decrypter::new(&system_json.encryption_key)?;
+    let decrypter = Decrypter::new(&system_json.encryption_key)
+        .map_err(|_| AppError::InvalidEncryptionKey(system_json.encryption_key))?;
 
     WalkDir::new(&config.game_dir)
         .into_iter()
@@ -60,7 +62,7 @@ fn copy_with_decryption(
     dest_root: &Path,
     source: &Path,
     decrypter: &Decrypter,
-) -> Result<()> {
+) -> Result<(), AppError> {
     let (dest, do_decrypt) = plan(game_dir, dest_root, source);
 
     if let Some(dest_parent) = dest.parent() {
@@ -96,7 +98,7 @@ static EXT_MAP: phf::Map<&'static str, &'static str> = phf_map! {
     "png_" => "png",
 };
 
-fn remove_encryption_info(dest_root: &Path) -> Result<()> {
+fn remove_encryption_info(dest_root: &Path) -> Result<(), AppError> {
     let SystemJson { path, mut content, .. } = SystemJson::read(dest_root)?;
 
     content.remove("hasEncryptedImages");
