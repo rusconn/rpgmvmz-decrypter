@@ -5,5 +5,5 @@ edition = "2024"
 license = "MIT"
 
 [dependencies]
-anyhow = "1.0.97"
 hex = "0.4.3"
+thiserror = "2.0.17"

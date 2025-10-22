@@ -1,14 +1,13 @@
-use anyhow::{Result, anyhow};
+use hex::FromHexError;
+use thiserror::Error;
 
 pub struct Decrypter {
     masks: Vec<u8>,
 }
 
 impl Decrypter {
-    pub fn new(encryption_key: &str) -> Result<Self> {
-        let masks = hex::decode(encryption_key) //
-            .map_err(|e| anyhow!("Invalid encryptionKey: {e}"))?;
-
+    pub fn new(encryption_key: &str) -> Result<Self, InitError> {
+        let masks = hex::decode(encryption_key)?;
         Ok(Self { masks })
     }
 
@@ -18,5 +17,29 @@ impl Decrypter {
             body[i] ^= self.masks[i];
         }
         body
+    }
+}
+
+#[derive(Debug, Error)]
+pub enum InitError {
+    #[error("invalid character at index {index}: {c:?}")]
+    InvalidCharacter { c: char, index: usize },
+
+    #[error("odd length")]
+    OddLength,
+
+    #[error("invalid length")]
+    InvalidLength,
+}
+
+impl From<FromHexError> for InitError {
+    fn from(e: FromHexError) -> Self {
+        match e {
+            FromHexError::InvalidHexCharacter { c, index } => {
+                InitError::InvalidCharacter { c, index }
+            }
+            FromHexError::OddLength => InitError::OddLength,
+            FromHexError::InvalidStringLength => InitError::InvalidLength,
+        }
     }
 }
