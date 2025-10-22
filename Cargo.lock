@@ -169,6 +169,7 @@ dependencies = [
  "rayon",
  "rpgmvmz-decrypter",
  "serde_json",
+ "thiserror",
  "walkdir",
 ]
 
