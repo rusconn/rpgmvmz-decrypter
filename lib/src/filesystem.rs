@@ -5,6 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use phf::{Map, phf_map};
 use rayon::prelude::*;
 use thiserror::Error;
 use walkdir::{DirEntry, WalkDir};
@@ -22,14 +23,14 @@ pub fn decrypt(game_dir: &Path) -> Result<(), DecryptionError> {
         .par_bridge()
         .flatten()
         .filter_map(Plan::new)
-        .try_for_each(|Plan { source, dest }| do_decrypt(&source, &dest, &decrypter))?;
+        .try_for_each(|plan| do_decrypt(&plan, &decrypter))?;
 
     mark_as_unencrypted(system_json)?;
 
     Ok(())
 }
 
-fn do_decrypt(source: &Path, dest: &Path, decrypter: &Decrypter) -> Result<(), DecryptionError> {
+fn do_decrypt(Plan { source, dest }: &Plan, decrypter: &Decrypter) -> Result<(), DecryptionError> {
     let mut bytes = fs::read(source)?;
 
     fs::write(dest, decrypter.decrypt(&mut bytes))?;
@@ -58,7 +59,7 @@ impl Plan {
     }
 }
 
-static EXT_MAP: phf::Map<&'static str, &'static str> = phf::phf_map! {
+static EXT_MAP: Map<&'static str, &'static str> = phf_map! {
     "rpgmvo" => "ogg",
     "rpgmvm" => "m4a",
     "rpgmvp" => "png",
@@ -70,8 +71,8 @@ static EXT_MAP: phf::Map<&'static str, &'static str> = phf::phf_map! {
 fn mark_as_unencrypted(
     SystemJson { mut content, path, .. }: SystemJson,
 ) -> Result<(), DecryptionError> {
-    content.remove("hasEncryptedImages");
     content.remove("hasEncryptedAudio");
+    content.remove("hasEncryptedImages");
 
     fs::write(&path, serde_json::to_string(&content).expect("success"))?;
 
