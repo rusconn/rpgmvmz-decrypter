@@ -1,19 +1,17 @@
 use std::{env, path::PathBuf};
 
-use anyhow::{Context, Result};
-
-pub(crate) struct Config {
+pub(crate) struct Args {
     pub(crate) game_dir: PathBuf,
 }
 
-impl Config {
-    pub(crate) fn parse(mut args: env::Args) -> Result<Self> {
+impl Args {
+    pub(crate) fn parse(mut args: env::Args) -> Result<Self, String> {
         args.next();
 
         let game_dir = args
             .next()
             .map(PathBuf::from)
-            .context("USAGE: decvz <game_dir>")?;
+            .ok_or("USAGE: decvz <game_dir>")?;
 
         Ok(Self { game_dir })
     }

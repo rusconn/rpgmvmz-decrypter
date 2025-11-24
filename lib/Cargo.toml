@@ -4,10 +4,15 @@ version = "0.1.0"
 edition = "2024"
 license = "MIT"
 
+[features]
+filesystem = ["phf", "rayon", "serde_json", "walkdir"]
+
 [dependencies]
 hex = "0.4.3"
-phf = { version = "0.13.1", optional = true, features = ["macros"] }
 thiserror = "2.0.17"
 
-[features]
-file = ["phf"]
+# filesystem
+phf = { version = "0.13.1", optional = true, features = ["macros"] }
+rayon = { version = "1.10.0", optional = true }
+serde_json = { version = "1.0.140", optional = true }
+walkdir = { version = "2.5.0", optional = true }
