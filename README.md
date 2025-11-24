@@ -14,20 +14,6 @@ cargo install --git https://github.com/rusconn/rpgmvmz-decrypter.git
 decvz <game_dir>
 ```
 
-### Example
-
-```shell
-decvz ./games/my-game
-```
-
-### Result
-
-```text
-├── games
-│   ├── my-game
-│   └── my-game_decrypted
-```
-
 ## Decryption Rules
 
 | Encrypted File | Decrypted As |
