@@ -7,7 +7,7 @@ use std::{
 
 use rayon::prelude::*;
 use thiserror::Error;
-use walkdir::WalkDir;
+use walkdir::{DirEntry, WalkDir};
 
 use crate::decrypter::{self, Decrypter};
 
@@ -21,11 +21,8 @@ pub fn decrypt(game_dir: &Path) -> Result<(), DecryptionError> {
         .into_iter()
         .par_bridge()
         .flatten()
-        .map(|entry| entry.into_path())
-        .filter(|path| path.is_file())
-        .map(Plan::new)
-        .filter(|Plan { do_decrypt, .. }| *do_decrypt)
-        .try_for_each(|Plan { source, dest, .. }| do_decrypt(&source, &dest, &decrypter))?;
+        .filter_map(Plan::new)
+        .try_for_each(|Plan { source, dest }| do_decrypt(&source, &dest, &decrypter))?;
 
     mark_as_unencrypted(system_json)?;
 
@@ -44,15 +41,20 @@ fn do_decrypt(source: &Path, dest: &Path, decrypter: &Decrypter) -> Result<(), D
 struct Plan {
     source: PathBuf,
     dest: PathBuf,
-    do_decrypt: bool,
 }
 
 impl Plan {
-    fn new(source: PathBuf) -> Plan {
-        let ext = source.extension().and_then(|s| s.to_str()).unwrap_or("");
-        let dest = source.with_extension(EXT_MAP.get(ext).unwrap_or(&ext));
-        let do_decrypt = EXT_MAP.contains_key(ext);
-        Self { source, dest, do_decrypt }
+    fn new(entry: DirEntry) -> Option<Plan> {
+        let source = entry.into_path();
+        if !source.is_file() {
+            return None;
+        }
+
+        let ext = source.extension()?.to_str()?;
+        let ext = EXT_MAP.get(ext)?;
+        let dest = source.with_extension(ext);
+
+        Some(Self { source, dest })
     }
 }
 
