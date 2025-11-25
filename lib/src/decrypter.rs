@@ -25,9 +25,6 @@ pub enum InitError {
     #[error("invalid character at index {index}: {c:?}")]
     InvalidCharacter { c: char, index: usize },
 
-    #[error("odd length")]
-    OddLength,
-
     #[error("invalid length")]
     InvalidLength,
 }
@@ -38,7 +35,7 @@ impl From<FromHexError> for InitError {
             FromHexError::InvalidHexCharacter { c, index } => {
                 InitError::InvalidCharacter { c, index }
             }
-            FromHexError::OddLength => InitError::OddLength,
+            FromHexError::OddLength => InitError::InvalidLength,
             FromHexError::InvalidStringLength => InitError::InvalidLength,
         }
     }
