@@ -14,6 +14,10 @@ use crate::decrypter::{self, Decrypter};
 
 use self::{plan::Plan, system_json::SystemJson};
 
+pub use self::{
+    system_json::MarkError as MarkSystemJsonError, system_json::ReadError as ReadSystemJsonError,
+};
+
 pub fn decrypt(game_dir: &Path) -> Result<(), DecryptionError> {
     let mut system_json = SystemJson::read(game_dir)?;
     let decrypter = Decrypter::new(&system_json.encryption_key)?;
