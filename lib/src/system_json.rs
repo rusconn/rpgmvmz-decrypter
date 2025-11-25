@@ -3,8 +3,10 @@ use std::str::FromStr;
 use serde_json::{Map, Value};
 use thiserror::Error;
 
+use crate::encryption_key::{self, EncryptionKey};
+
 pub struct SystemJson {
-    pub encryption_key: String,
+    pub encryption_key: EncryptionKey,
     pub content: Map<String, Value>,
 }
 
@@ -22,10 +24,16 @@ impl FromStr for SystemJson {
             return Err(Self::Err::EncryptionKeyIsNotAString);
         };
 
-        Ok(Self {
-            encryption_key: encryption_key.into(),
-            content,
-        })
+        let encryption_key = encryption_key
+            .parse()
+            .map_err(
+                |e: encryption_key::ParseError| Self::Err::InvalidEncryptionKey {
+                    encryption_key: encryption_key.into(),
+                    source: e.into(),
+                },
+            )?;
+
+        Ok(Self { encryption_key, content })
     }
 }
 
@@ -38,7 +46,7 @@ impl SystemJson {
 
 #[derive(Debug, Error)]
 pub enum ParseError {
-    #[error("System.json is not an object")]
+    #[error("content is not an object")]
     NotAnObject,
 
     #[error("encryptionKey not exists")]
@@ -46,4 +54,31 @@ pub enum ParseError {
 
     #[error("encryptionKey is not a string")]
     EncryptionKeyIsNotAString,
+
+    #[error("invalid encryptionKey({encryption_key}): {source}")]
+    InvalidEncryptionKey {
+        encryption_key: String,
+        #[source]
+        source: InvalidEncryptionKeyError,
+    },
+}
+
+#[derive(Debug, Error)]
+pub enum InvalidEncryptionKeyError {
+    #[error("invalid character at index {index}: {c:?}")]
+    InvalidCharacter { c: char, index: usize },
+
+    #[error("invalid length")]
+    InvalidLength,
+}
+
+impl From<encryption_key::ParseError> for InvalidEncryptionKeyError {
+    fn from(e: encryption_key::ParseError) -> Self {
+        match e {
+            encryption_key::ParseError::InvalidCharacter { c, index } => {
+                Self::InvalidCharacter { c, index }
+            }
+            encryption_key::ParseError::InvalidLength => Self::InvalidLength,
+        }
+    }
 }

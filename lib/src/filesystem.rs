@@ -10,7 +10,8 @@ use thiserror::Error;
 use walkdir::WalkDir;
 
 use crate::{
-    decrypter::{self, Decrypter},
+    decrypter,
+    encryption_key::EncryptionKey,
     system_json::{self, SystemJson},
 };
 
@@ -27,18 +28,12 @@ pub fn decrypt(game_dir: &Path) -> Result<(), DecryptionError> {
                 source: source.into(),
             })?;
 
-    let decrypter = Decrypter::new(&system_json.encryption_key) //
-        .map_err(|source| DecryptionError::InvalidEncryptionKey {
-            encryption_key: system_json.encryption_key.clone(),
-            source: source.into(),
-        })?;
-
     WalkDir::new(game_dir)
         .into_iter()
         .par_bridge()
         .flatten()
         .filter_map(Plan::new)
-        .try_for_each(|plan| do_decrypt(&plan, &decrypter))?;
+        .try_for_each(|plan| do_decrypt(&plan, &system_json.encryption_key))?;
 
     system_json.mark_as_unencrypted();
 
@@ -69,14 +64,14 @@ fn read_system_json(game_dir: &Path) -> Result<(PathBuf, String), DecryptionErro
         .map(|s| (system_json_path, s))
 }
 
-fn do_decrypt(plan: &Plan, decrypter: &Decrypter) -> Result<(), DecryptionError> {
+fn do_decrypt(plan: &Plan, encryption_key: &EncryptionKey) -> Result<(), DecryptionError> {
     let mut bytes = fs::read(&plan.source) //
         .map_err(|source| DecryptionError::ReadEncryptedFile {
             path: plan.source.clone(),
             source,
         })?;
 
-    fs::write(&plan.dest, decrypter.decrypt(&mut bytes)) //
+    fs::write(&plan.dest, decrypter::decrypt(&mut bytes, encryption_key)) //
         .map_err(|source| DecryptionError::WriteDecryptedFile {
             path: plan.source.clone(),
             source,
@@ -111,49 +106,42 @@ pub enum DecryptionError {
     #[error("System.json not exists")]
     SystemJsonNotExists,
 
-    #[error("failed to read System.json ({path}): {source}")]
+    #[error("failed to read System.json({path}): {source}")]
     ReadSystemJson {
         path: PathBuf,
         #[source]
         source: io::Error,
     },
 
-    #[error("failed to parse System.json ({path}): {source}")]
+    #[error("failed to parse System.json({path}): {source}")]
     ParseSystemJson {
         path: PathBuf,
         #[source]
         source: ParseSystemJsonError,
     },
 
-    #[error("invalid encryptionKey: {encryption_key}: {source}")]
-    InvalidEncryptionKey {
-        encryption_key: String,
-        #[source]
-        source: InvalidEncryptionKeyError,
-    },
-
-    #[error("failed to read encrypted file {path}: {source}")]
+    #[error("failed to read encrypted file({path}): {source}")]
     ReadEncryptedFile {
         path: PathBuf,
         #[source]
         source: io::Error,
     },
 
-    #[error("failed to write decrypted file {path}: {source}")]
+    #[error("failed to write decrypted file({path}): {source}")]
     WriteDecryptedFile {
         path: PathBuf,
         #[source]
         source: io::Error,
     },
 
-    #[error("failed to remove encrypted file {path}: {source}")]
+    #[error("failed to remove encrypted file({path}): {source}")]
     RemoveEncryptedFile {
         path: PathBuf,
         #[source]
         source: io::Error,
     },
 
-    #[error("failed to mark System.json as unencrypted ({path}): {source}")]
+    #[error("failed to mark System.json as unencrypted({path}): {source}")]
     MarkSystemJsonAsUnencrypted {
         path: PathBuf,
         #[source]
@@ -171,17 +159,26 @@ pub enum ParseSystemJsonError {
 
     #[error("encryptionKey is not a string")]
     EncryptionKeyIsNotAString,
+
+    #[error("invalid encryptionKey({encryption_key}): {source}")]
+    InvalidEncryptionKey {
+        encryption_key: String,
+        #[source]
+        source: InvalidEncryptionKeyError,
+    },
 }
 
 impl From<system_json::ParseError> for ParseSystemJsonError {
     fn from(e: system_json::ParseError) -> Self {
         match e {
-            system_json::ParseError::NotAnObject => ParseSystemJsonError::NotAnObject,
-            system_json::ParseError::EncryptionKeyNotExists => {
-                ParseSystemJsonError::EncryptionKeyNotExists
-            }
-            system_json::ParseError::EncryptionKeyIsNotAString => {
-                ParseSystemJsonError::EncryptionKeyIsNotAString
+            system_json::ParseError::NotAnObject => Self::NotAnObject,
+            system_json::ParseError::EncryptionKeyNotExists => Self::EncryptionKeyNotExists,
+            system_json::ParseError::EncryptionKeyIsNotAString => Self::EncryptionKeyIsNotAString,
+            system_json::ParseError::InvalidEncryptionKey { encryption_key, source } => {
+                Self::InvalidEncryptionKey {
+                    encryption_key,
+                    source: source.into(),
+                }
             }
         }
     }
@@ -196,13 +193,13 @@ pub enum InvalidEncryptionKeyError {
     InvalidLength,
 }
 
-impl From<decrypter::InitError> for InvalidEncryptionKeyError {
-    fn from(e: decrypter::InitError) -> Self {
+impl From<system_json::InvalidEncryptionKeyError> for InvalidEncryptionKeyError {
+    fn from(e: system_json::InvalidEncryptionKeyError) -> Self {
         match e {
-            decrypter::InitError::InvalidCharacter { c, index } => {
-                InvalidEncryptionKeyError::InvalidCharacter { c, index }
+            system_json::InvalidEncryptionKeyError::InvalidCharacter { c, index } => {
+                Self::InvalidCharacter { c, index }
             }
-            decrypter::InitError::InvalidLength => InvalidEncryptionKeyError::InvalidLength,
+            system_json::InvalidEncryptionKeyError::InvalidLength => Self::InvalidLength,
         }
     }
 }
