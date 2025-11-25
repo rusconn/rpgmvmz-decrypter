@@ -5,7 +5,8 @@ edition = "2024"
 license = "MIT"
 
 [features]
-filesystem = ["phf", "rayon", "serde_json", "walkdir"]
+filesystem = ["phf", "rayon", "walkdir", "system_json"]
+system_json = ["serde_json"]
 
 [dependencies]
 hex = "0.4.3"
@@ -14,5 +15,7 @@ thiserror = "2.0.17"
 # filesystem
 phf = { version = "0.13.1", optional = true, features = ["macros"] }
 rayon = { version = "1.10.0", optional = true }
-serde_json = { version = "1.0.140", optional = true }
 walkdir = { version = "2.5.0", optional = true }
+
+# system_json
+serde_json = { version = "1.0.140", optional = true }
