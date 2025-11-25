@@ -15,7 +15,7 @@ use crate::decrypter::{self, Decrypter};
 use self::system_json::SystemJson;
 
 pub fn decrypt(game_dir: &Path) -> Result<(), DecryptionError> {
-    let system_json = SystemJson::read(game_dir)?;
+    let mut system_json = SystemJson::read(game_dir)?;
     let decrypter = Decrypter::new(&system_json.encryption_key)?;
 
     WalkDir::new(game_dir)
@@ -25,7 +25,7 @@ pub fn decrypt(game_dir: &Path) -> Result<(), DecryptionError> {
         .filter_map(Plan::new)
         .try_for_each(|plan| do_decrypt(&plan, &decrypter))?;
 
-    mark_as_unencrypted(system_json)?;
+    system_json.mark_as_unencrypted()?;
 
     Ok(())
 }
@@ -68,17 +68,6 @@ static EXT_MAP: Map<&'static str, &'static str> = phf_map! {
     "png_" => "png",
 };
 
-fn mark_as_unencrypted(
-    SystemJson { mut content, path, .. }: SystemJson,
-) -> Result<(), DecryptionError> {
-    content.remove("hasEncryptedAudio");
-    content.remove("hasEncryptedImages");
-
-    fs::write(&path, serde_json::to_string(&content).expect("success"))?;
-
-    Ok(())
-}
-
 #[derive(Debug, Error)]
 pub enum DecryptionError {
     #[error(transparent)]
@@ -86,6 +75,9 @@ pub enum DecryptionError {
 
     #[error("invalid encryptionKey: {0}")]
     InvalidEncryptionKey(#[from] decrypter::InitError),
+
+    #[error(transparent)]
+    MarkSystemJsonAsUnencrypted(#[from] system_json::MarkError),
 
     #[error(transparent)]
     Io(#[from] io::Error),

@@ -47,6 +47,18 @@ impl SystemJson {
             content,
         })
     }
+
+    pub(super) fn mark_as_unencrypted(&mut self) -> Result<(), MarkError> {
+        self.content.remove("hasEncryptedAudio");
+        self.content.remove("hasEncryptedImages");
+
+        fs::write(
+            &self.path,
+            serde_json::to_string(&self.content).expect("success"),
+        )?;
+
+        Ok(())
+    }
 }
 
 #[derive(Debug, Error)]
@@ -69,6 +81,12 @@ pub enum ReadError {
     #[error("encryptionKey is not a string")]
     EncryptionKeyIsNotAString,
 
+    #[error(transparent)]
+    Io(#[from] io::Error),
+}
+
+#[derive(Debug, Error)]
+pub enum MarkError {
     #[error(transparent)]
     Io(#[from] io::Error),
 }
