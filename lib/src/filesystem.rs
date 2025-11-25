@@ -30,11 +30,24 @@ pub fn decrypt(game_dir: &Path) -> Result<(), DecryptionError> {
     Ok(())
 }
 
-fn do_decrypt(Plan { source, dest }: &Plan, decrypter: &Decrypter) -> Result<(), DecryptionError> {
-    let mut bytes = fs::read(source)?;
+fn do_decrypt(plan: &Plan, decrypter: &Decrypter) -> Result<(), DecryptionError> {
+    let mut bytes = fs::read(&plan.source) //
+        .map_err(|source| DecryptionError::ReadEncryptedFile {
+            path: plan.source.clone(),
+            source,
+        })?;
 
-    fs::write(dest, decrypter.decrypt(&mut bytes))?;
-    fs::remove_file(source)?;
+    fs::write(&plan.dest, decrypter.decrypt(&mut bytes)) //
+        .map_err(|error| DecryptionError::WriteDecryptedFile {
+            path: plan.source.clone(),
+            source: error,
+        })?;
+
+    fs::remove_file(&plan.source) //
+        .map_err(|source| DecryptionError::RemoveEncryptedFile {
+            path: plan.source.clone(),
+            source,
+        })?;
 
     Ok(())
 }
@@ -76,9 +89,27 @@ pub enum DecryptionError {
     #[error("invalid encryptionKey: {0}")]
     InvalidEncryptionKey(#[from] decrypter::InitError),
 
-    #[error(transparent)]
-    MarkSystemJsonAsUnencrypted(#[from] system_json::MarkError),
+    #[error("failed to read encrypted file {path}: {source}")]
+    ReadEncryptedFile {
+        path: PathBuf,
+        #[source]
+        source: io::Error,
+    },
+
+    #[error("failed to write decrypted file {path}: {source}")]
+    WriteDecryptedFile {
+        path: PathBuf,
+        #[source]
+        source: io::Error,
+    },
+
+    #[error("failed to remove encrypted file {path}: {source}")]
+    RemoveEncryptedFile {
+        path: PathBuf,
+        #[source]
+        source: io::Error,
+    },
 
     #[error(transparent)]
-    Io(#[from] io::Error),
+    MarkSystemJsonAsUnencrypted(#[from] system_json::MarkError),
 }

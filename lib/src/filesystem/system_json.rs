@@ -29,7 +29,11 @@ impl SystemJson {
             .find(|p| p.exists())
             .ok_or(ReadError::SystemJsonNotExists)?;
 
-        let read = fs::read_to_string(&system_json_path)?;
+        let read = fs::read_to_string(&system_json_path) //
+            .map_err(|source| ReadError::ReadSystemJson {
+                path: system_json_path.clone(),
+                source,
+            })?;
 
         let Ok(content) = read.parse::<Map<String, Value>>() else {
             return Err(ReadError::InvalidSystemJsonContent);
@@ -55,7 +59,11 @@ impl SystemJson {
         fs::write(
             &self.path,
             serde_json::to_string(&self.content).expect("success"),
-        )?;
+        )
+        .map_err(|source| MarkError::Write {
+            path: self.path.clone(),
+            source,
+        })?;
 
         Ok(())
     }
@@ -72,6 +80,13 @@ pub enum ReadError {
     #[error("System.json not exists")]
     SystemJsonNotExists,
 
+    #[error("failed to read System.json ({path}): {source}")]
+    ReadSystemJson {
+        path: PathBuf,
+        #[source]
+        source: io::Error,
+    },
+
     #[error("invalid System.json content")]
     InvalidSystemJsonContent,
 
@@ -80,13 +95,14 @@ pub enum ReadError {
 
     #[error("encryptionKey is not a string")]
     EncryptionKeyIsNotAString,
-
-    #[error(transparent)]
-    Io(#[from] io::Error),
 }
 
 #[derive(Debug, Error)]
 pub enum MarkError {
-    #[error(transparent)]
-    Io(#[from] io::Error),
+    #[error("failed to mark System.json as unencrypted ({path}): {source}")]
+    Write {
+        path: PathBuf,
+        #[source]
+        source: io::Error,
+    },
 }
