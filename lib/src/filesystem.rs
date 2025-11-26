@@ -17,16 +17,14 @@ use crate::{
 
 use self::plan::Plan;
 
+pub use system_json::{InvalidEncryptionKeyError, ParseError as ParseSystemJsonError};
+
 pub fn decrypt(game_dir: &Path) -> Result<(), DecryptionError> {
     let (path, content) = read_system_json(game_dir)?;
 
-    let mut system_json =
-        content
-            .parse::<SystemJson>()
-            .map_err(|source| DecryptionError::ParseSystemJson {
-                path: path.clone(),
-                source: source.into(),
-            })?;
+    let mut system_json = content
+        .parse::<SystemJson>()
+        .map_err(|source| DecryptionError::ParseSystemJson { path: path.clone(), source })?;
 
     WalkDir::new(game_dir)
         .into_iter()
@@ -147,59 +145,4 @@ pub enum DecryptionError {
         #[source]
         source: io::Error,
     },
-}
-
-#[derive(Debug, Error)]
-pub enum ParseSystemJsonError {
-    #[error("System.json is not an object")]
-    NotAnObject,
-
-    #[error("encryptionKey not exists")]
-    EncryptionKeyNotExists,
-
-    #[error("encryptionKey is not a string")]
-    EncryptionKeyIsNotAString,
-
-    #[error("invalid encryptionKey({encryption_key}): {source}")]
-    InvalidEncryptionKey {
-        encryption_key: String,
-        #[source]
-        source: InvalidEncryptionKeyError,
-    },
-}
-
-impl From<system_json::ParseError> for ParseSystemJsonError {
-    fn from(e: system_json::ParseError) -> Self {
-        match e {
-            system_json::ParseError::NotAnObject => Self::NotAnObject,
-            system_json::ParseError::EncryptionKeyNotExists => Self::EncryptionKeyNotExists,
-            system_json::ParseError::EncryptionKeyIsNotAString => Self::EncryptionKeyIsNotAString,
-            system_json::ParseError::InvalidEncryptionKey { encryption_key, source } => {
-                Self::InvalidEncryptionKey {
-                    encryption_key,
-                    source: source.into(),
-                }
-            }
-        }
-    }
-}
-
-#[derive(Debug, Error)]
-pub enum InvalidEncryptionKeyError {
-    #[error("invalid character at index {index}: {c:?}")]
-    InvalidCharacter { c: char, index: usize },
-
-    #[error("invalid length")]
-    InvalidLength,
-}
-
-impl From<system_json::InvalidEncryptionKeyError> for InvalidEncryptionKeyError {
-    fn from(e: system_json::InvalidEncryptionKeyError) -> Self {
-        match e {
-            system_json::InvalidEncryptionKeyError::InvalidCharacter { c, index } => {
-                Self::InvalidCharacter { c, index }
-            }
-            system_json::InvalidEncryptionKeyError::InvalidLength => Self::InvalidLength,
-        }
-    }
 }

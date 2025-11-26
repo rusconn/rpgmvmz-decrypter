@@ -5,6 +5,8 @@ use thiserror::Error;
 
 use crate::encryption_key::{self, EncryptionKey};
 
+pub use encryption_key::ParseError as InvalidEncryptionKeyError;
+
 pub struct SystemJson {
     pub encryption_key: EncryptionKey,
     pub content: Map<String, Value>,
@@ -24,14 +26,13 @@ impl FromStr for SystemJson {
             return Err(Self::Err::EncryptionKeyIsNotAString);
         };
 
-        let encryption_key = encryption_key
-            .parse()
-            .map_err(
-                |e: encryption_key::ParseError| Self::Err::InvalidEncryptionKey {
+        let encryption_key =
+            encryption_key
+                .parse()
+                .map_err(|source| Self::Err::InvalidEncryptionKey {
                     encryption_key: encryption_key.into(),
-                    source: e.into(),
-                },
-            )?;
+                    source,
+                })?;
 
         Ok(Self { encryption_key, content })
     }
@@ -61,24 +62,4 @@ pub enum ParseError {
         #[source]
         source: InvalidEncryptionKeyError,
     },
-}
-
-#[derive(Debug, Error)]
-pub enum InvalidEncryptionKeyError {
-    #[error("invalid character at index {index}: {c:?}")]
-    InvalidCharacter { c: char, index: usize },
-
-    #[error("invalid length")]
-    InvalidLength,
-}
-
-impl From<encryption_key::ParseError> for InvalidEncryptionKeyError {
-    fn from(e: encryption_key::ParseError) -> Self {
-        match e {
-            encryption_key::ParseError::InvalidCharacter { c, index } => {
-                Self::InvalidCharacter { c, index }
-            }
-            encryption_key::ParseError::InvalidLength => Self::InvalidLength,
-        }
-    }
 }
