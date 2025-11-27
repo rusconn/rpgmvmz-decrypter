@@ -28,8 +28,13 @@ pub fn decrypt(game_dir: &Path) -> Result<(), DecryptionError> {
 
     WalkDir::new(game_dir)
         .into_iter()
-        .par_bridge()
-        .flatten()
+        .collect::<Result<Vec<_>, _>>()
+        // since follow_links=false, loops won't occur.
+        .map_err(|e| DecryptionError::Scan {
+            path: e.path().map(Path::to_path_buf),
+            source: e.into_io_error().unwrap(),
+        })?
+        .into_par_iter()
         .filter_map(Plan::new)
         .try_for_each(|plan| do_decrypt(&plan, &system_json.encryption_key))?;
 
@@ -116,6 +121,13 @@ pub enum DecryptionError {
         path: PathBuf,
         #[source]
         source: ParseSystemJsonError,
+    },
+
+    #[error("failed to scan({path:?}): {source}")]
+    Scan {
+        path: Option<PathBuf>,
+        #[source]
+        source: io::Error,
     },
 
     #[error("failed to read encrypted file({path}): {source}")]

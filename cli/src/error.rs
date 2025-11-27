@@ -27,6 +27,12 @@ fn show_decryption_error(e: &filesystem::DecryptionError) -> String {
                 show_parse_system_json_error(source)
             )
         }
+        filesystem::DecryptionError::Scan { path, source } => match path {
+            Some(path) => {
+                format!("failed to scan {}: {source}", path.display())
+            }
+            _ => format!("failed to scan: {source}"),
+        },
         filesystem::DecryptionError::ReadEncryptedFile { path, source } => {
             format!(
                 "failed to read encrypted file({}): {source}",
