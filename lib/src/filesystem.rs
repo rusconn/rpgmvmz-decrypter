@@ -40,10 +40,10 @@ pub fn decrypt(game_dir: &Path) -> Result<(), DecryptionError> {
 
 fn read_system_json(game_dir: &Path) -> Result<(PathBuf, String), DecryptionError> {
     if !game_dir.exists() {
-        return Err(DecryptionError::GameDirNotExists(game_dir.into()));
+        return Err(DecryptionError::NotExists(game_dir.into()));
     }
     if !game_dir.is_dir() {
-        return Err(DecryptionError::GameDirIsNotADirectory(game_dir.into()));
+        return Err(DecryptionError::NotADirectory(game_dir.into()));
     }
 
     let mv_path = game_dir.join("www").join("data").join("System.json");
@@ -52,7 +52,7 @@ fn read_system_json(game_dir: &Path) -> Result<(PathBuf, String), DecryptionErro
     let system_json_path = [mv_path, mz_path]
         .into_iter()
         .find(|p| p.exists())
-        .ok_or(DecryptionError::SystemJsonNotExists)?;
+        .ok_or(DecryptionError::SystemJsonNotFound)?;
 
     fs::read_to_string(&system_json_path) //
         .map_err(|source| DecryptionError::ReadSystemJson {
@@ -96,13 +96,13 @@ fn write_system_json(path: &Path, system_json: &SystemJson) -> Result<(), Decryp
 #[derive(Debug, Error)]
 pub enum DecryptionError {
     #[error("{0} not exists")]
-    GameDirNotExists(PathBuf),
+    NotExists(PathBuf),
 
     #[error("{0} is not a directory")]
-    GameDirIsNotADirectory(PathBuf),
+    NotADirectory(PathBuf),
 
-    #[error("System.json not exists")]
-    SystemJsonNotExists,
+    #[error("System.json not found")]
+    SystemJsonNotFound,
 
     #[error("failed to read System.json({path}): {source}")]
     ReadSystemJson {

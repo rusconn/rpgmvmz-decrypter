@@ -10,13 +10,13 @@ pub(crate) enum AppError {
 
 fn show_decryption_error(e: &filesystem::DecryptionError) -> String {
     match e {
-        filesystem::DecryptionError::GameDirNotExists(path) => {
+        filesystem::DecryptionError::NotExists(path) => {
             format!("specified path does not exist: {}", path.display())
         }
-        filesystem::DecryptionError::GameDirIsNotADirectory(path) => {
+        filesystem::DecryptionError::NotADirectory(path) => {
             format!("specified path is not a directory: {}", path.display())
         }
-        filesystem::DecryptionError::SystemJsonNotExists => "System.json was not found".into(),
+        filesystem::DecryptionError::SystemJsonNotFound => "System.json was not found".into(),
         filesystem::DecryptionError::ReadSystemJson { path, source } => {
             format!("failed to read System.json({}): {source}", path.display())
         }
