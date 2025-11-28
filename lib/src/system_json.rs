@@ -40,8 +40,8 @@ impl FromStr for SystemJson {
 
 impl SystemJson {
     pub fn mark_as_unencrypted(&mut self) {
-        self.content.remove("hasEncryptedAudio");
-        self.content.remove("hasEncryptedImages");
+        self.content["hasEncryptedAudio"] = Value::Bool(false);
+        self.content["hasEncryptedImages"] = Value::Bool(false);
     }
 }
 
