@@ -5,8 +5,8 @@ edition = "2024"
 license = "MIT"
 
 [features]
-filesystem = ["phf", "rayon", "walkdir", "system_json"]
-system_json = ["serde_json"]
+filesystem = ["dep:phf", "dep:rayon", "dep:walkdir", "system_json"]
+system_json = ["dep:serde_json"]
 
 [dependencies]
 hex = "0.4.3"
