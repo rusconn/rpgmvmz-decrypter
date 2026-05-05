@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{fmt, str::FromStr};
 
 use serde_json::{Map, Value};
 use thiserror::Error;
@@ -9,7 +9,7 @@ pub use encryption_key::ParseError as InvalidEncryptionKeyError;
 
 pub struct SystemJson {
     pub encryption_key: EncryptionKey,
-    pub content: Map<String, Value>,
+    content: Map<String, Value>,
 }
 
 impl FromStr for SystemJson {
@@ -35,6 +35,16 @@ impl FromStr for SystemJson {
                 })?;
 
         Ok(Self { encryption_key, content })
+    }
+}
+
+impl fmt::Display for SystemJson {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            serde_json::to_string(&self.content).expect("success")
+        )
     }
 }
 

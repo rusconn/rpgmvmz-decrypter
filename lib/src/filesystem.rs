@@ -89,14 +89,11 @@ fn do_decrypt(plan: &Plan, encryption_key: &EncryptionKey) -> Result<(), Decrypt
 }
 
 fn write_system_json(path: &Path, system_json: &SystemJson) -> Result<(), DecryptionError> {
-    fs::write(
-        path,
-        serde_json::to_string(&system_json.content).expect("success"),
-    )
-    .map_err(|source| DecryptionError::MarkSystemJsonAsUnencrypted {
-        path: path.to_path_buf(),
-        source,
-    })
+    fs::write(path, system_json.to_string()) //
+        .map_err(|source| DecryptionError::MarkSystemJsonAsUnencrypted {
+            path: path.to_path_buf(),
+            source,
+        })
 }
 
 #[derive(Debug, Error)]
