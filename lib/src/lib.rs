@@ -1,8 +1,8 @@
-mod decrypter;
+mod encrypted;
 mod encryption_key;
 
 pub use self::{
-    decrypter::decrypt,
+    encrypted::{Encrypted, InvalidEncryptedBytesError},
     encryption_key::{EncryptionKey, ParseError as ParseEncryptionKeyError},
 };
 

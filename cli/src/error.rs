@@ -1,6 +1,8 @@
 use thiserror::Error;
 
-use rpgmvmz_decrypter::{DecryptGameError, ParseEncryptionKeyError, ParseSystemJsonError};
+use rpgmvmz_decrypter::{
+    DecryptGameError, InvalidEncryptedBytesError, ParseEncryptionKeyError, ParseSystemJsonError,
+};
 
 #[derive(Debug, Error)]
 pub(crate) enum AppError {
@@ -37,6 +39,13 @@ fn show_decrypt_game_error(e: &DecryptGameError) -> String {
             format!(
                 "failed to read encrypted file({}): {source}",
                 path.display()
+            )
+        }
+        DecryptGameError::InvalidEncryptedFile { path, source } => {
+            format!(
+                "failed to decrypt encrypted file({}): {}",
+                path.display(),
+                show_invalid_encrypted_bytes_error(source)
             )
         }
         DecryptGameError::WriteDecryptedFile { path, source } => {
@@ -80,5 +89,11 @@ fn show_invalid_encryption_key_error(e: &ParseEncryptionKeyError) -> String {
             format!("invalid character '{}' at position {}", c, index + 1)
         }
         ParseEncryptionKeyError::InvalidLength => "invalid length".into(),
+    }
+}
+
+fn show_invalid_encrypted_bytes_error(e: &InvalidEncryptedBytesError) -> String {
+    match e {
+        InvalidEncryptedBytesError::InvalidEncryptionHeader => "invalid encryption header".into(),
     }
 }

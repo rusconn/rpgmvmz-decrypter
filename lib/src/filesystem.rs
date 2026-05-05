@@ -10,7 +10,7 @@ use thiserror::Error;
 use walkdir::WalkDir;
 
 use crate::{
-    decrypter,
+    Encrypted, encrypted,
     encryption_key::EncryptionKey,
     system_json::{self, SystemJson},
 };
@@ -67,13 +67,21 @@ fn read_system_json(game_dir: &Path) -> Result<(PathBuf, String), DecryptionErro
 }
 
 fn do_decrypt(plan: &Plan, encryption_key: &EncryptionKey) -> Result<(), DecryptionError> {
-    let mut bytes = fs::read(&plan.source) //
+    let bytes = fs::read(&plan.source) //
         .map_err(|source| DecryptionError::ReadEncryptedFile {
             path: plan.source.clone(),
             source,
         })?;
 
-    fs::write(&plan.dest, decrypter::decrypt(&mut bytes, encryption_key)) //
+    let encrypted = Encrypted::new(bytes) //
+        .map_err(|source| DecryptionError::InvalidEncryptedFile {
+            path: plan.source.clone(),
+            source,
+        })?;
+
+    let decrypted_view = encrypted.into_decrypted_view(encryption_key);
+
+    fs::write(&plan.dest, decrypted_view.as_bytes()) //
         .map_err(|source| DecryptionError::WriteDecryptedFile {
             path: plan.source.clone(),
             source,
@@ -131,6 +139,13 @@ pub enum DecryptionError {
         path: PathBuf,
         #[source]
         source: io::Error,
+    },
+
+    #[error("failed to decrypt file({path}): {source}")]
+    InvalidEncryptedFile {
+        path: PathBuf,
+        #[source]
+        source: encrypted::InvalidEncryptedBytesError,
     },
 
     #[error("failed to write decrypted file({path}): {source}")]
