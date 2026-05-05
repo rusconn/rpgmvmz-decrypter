@@ -5,8 +5,6 @@ use thiserror::Error;
 
 use crate::encryption_key::{self, EncryptionKey};
 
-pub use encryption_key::ParseError as InvalidEncryptionKeyError;
-
 pub struct SystemJson {
     encryption_key: EncryptionKey,
     content: Map<String, Value>,
@@ -74,6 +72,6 @@ pub enum ParseError {
     InvalidEncryptionKey {
         encryption_key: String,
         #[source]
-        source: InvalidEncryptionKeyError,
+        source: encryption_key::ParseError,
     },
 }

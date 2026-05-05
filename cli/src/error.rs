@@ -1,57 +1,57 @@
 use thiserror::Error;
 
-use rpgmvmz_decrypter::filesystem;
+use rpgmvmz_decrypter::{DecryptGameError, ParseEncryptionKeyError, ParseSystemJsonError};
 
 #[derive(Debug, Error)]
 pub(crate) enum AppError {
-    #[error("{}", show_decryption_error(.0))]
-    FileSystemDecryption(#[from] filesystem::DecryptionError),
+    #[error("{}", show_decrypt_game_error(.0))]
+    FileSystemDecryption(#[from] DecryptGameError),
 }
 
-fn show_decryption_error(e: &filesystem::DecryptionError) -> String {
+fn show_decrypt_game_error(e: &DecryptGameError) -> String {
     match e {
-        filesystem::DecryptionError::NotExists(path) => {
+        DecryptGameError::NotExists(path) => {
             format!("specified path does not exist: {}", path.display())
         }
-        filesystem::DecryptionError::NotADirectory(path) => {
+        DecryptGameError::NotADirectory(path) => {
             format!("specified path is not a directory: {}", path.display())
         }
-        filesystem::DecryptionError::SystemJsonNotFound => "System.json was not found".into(),
-        filesystem::DecryptionError::ReadSystemJson { path, source } => {
+        DecryptGameError::SystemJsonNotFound => "System.json was not found".into(),
+        DecryptGameError::ReadSystemJson { path, source } => {
             format!("failed to read System.json({}): {source}", path.display())
         }
-        filesystem::DecryptionError::ParseSystemJson { path, source } => {
+        DecryptGameError::ParseSystemJson { path, source } => {
             format!(
                 "failed to parse System.json({}): {}",
                 path.display(),
                 show_parse_system_json_error(source)
             )
         }
-        filesystem::DecryptionError::Scan { path, source } => match path {
+        DecryptGameError::Scan { path, source } => match path {
             Some(path) => {
                 format!("failed to scan {}: {source}", path.display())
             }
             _ => format!("failed to scan: {source}"),
         },
-        filesystem::DecryptionError::ReadEncryptedFile { path, source } => {
+        DecryptGameError::ReadEncryptedFile { path, source } => {
             format!(
                 "failed to read encrypted file({}): {source}",
                 path.display()
             )
         }
-        filesystem::DecryptionError::WriteDecryptedFile { path, source } => {
+        DecryptGameError::WriteDecryptedFile { path, source } => {
             format!(
                 "failed to write decrypted file({}): {source}",
                 path.display()
             )
         }
-        filesystem::DecryptionError::RemoveEncryptedFile { path, source } => {
+        DecryptGameError::RemoveEncryptedFile { path, source } => {
             format!(
                 "failed to remove encrypted file({}): {source}",
                 path.display()
             )
         }
-        filesystem::DecryptionError::MarkSystemJsonAsUnencrypted { path, source } => {
+        DecryptGameError::MarkSystemJsonAsUnencrypted { path, source } => {
             format!(
                 "failed to mark System.json as unencrypted({}): {source}",
                 path.display()
@@ -60,16 +60,12 @@ fn show_decryption_error(e: &filesystem::DecryptionError) -> String {
     }
 }
 
-fn show_parse_system_json_error(e: &filesystem::ParseSystemJsonError) -> String {
+fn show_parse_system_json_error(e: &ParseSystemJsonError) -> String {
     match e {
-        filesystem::ParseSystemJsonError::NotAnObject => "content is not an object".into(),
-        filesystem::ParseSystemJsonError::EncryptionKeyNotExists => {
-            "encryptionKey not exists".into()
-        }
-        filesystem::ParseSystemJsonError::EncryptionKeyIsNotAString => {
-            "encryptionKey is not a string".into()
-        }
-        filesystem::ParseSystemJsonError::InvalidEncryptionKey { encryption_key, source } => {
+        ParseSystemJsonError::NotAnObject => "content is not an object".into(),
+        ParseSystemJsonError::EncryptionKeyNotExists => "encryptionKey not exists".into(),
+        ParseSystemJsonError::EncryptionKeyIsNotAString => "encryptionKey is not a string".into(),
+        ParseSystemJsonError::InvalidEncryptionKey { encryption_key, source } => {
             format!(
                 "encryptionKey is invalid({encryption_key}): {}",
                 show_invalid_encryption_key_error(source)
@@ -78,11 +74,11 @@ fn show_parse_system_json_error(e: &filesystem::ParseSystemJsonError) -> String 
     }
 }
 
-fn show_invalid_encryption_key_error(e: &filesystem::InvalidEncryptionKeyError) -> String {
+fn show_invalid_encryption_key_error(e: &ParseEncryptionKeyError) -> String {
     match e {
-        filesystem::InvalidEncryptionKeyError::InvalidCharacter { c, index } => {
+        ParseEncryptionKeyError::InvalidCharacter { c, index } => {
             format!("invalid character '{}' at position {}", c, index + 1)
         }
-        filesystem::InvalidEncryptionKeyError::InvalidLength => "invalid length".into(),
+        ParseEncryptionKeyError::InvalidLength => "invalid length".into(),
     }
 }

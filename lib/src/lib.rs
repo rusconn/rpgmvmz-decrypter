@@ -1,8 +1,19 @@
-pub mod decrypter;
-pub mod encryption_key;
+mod decrypter;
+mod encryption_key;
+
+pub use self::{
+    decrypter::decrypt,
+    encryption_key::{EncryptionKey, ParseError as ParseEncryptionKeyError},
+};
 
 #[cfg(feature = "filesystem")]
-pub mod filesystem;
+mod filesystem;
+
+#[cfg(feature = "filesystem")]
+pub use filesystem::{DecryptionError as DecryptGameError, decrypt as decrypt_game};
 
 #[cfg(feature = "system_json")]
-pub mod system_json;
+mod system_json;
+
+#[cfg(feature = "system_json")]
+pub use system_json::{ParseError as ParseSystemJsonError, SystemJson};

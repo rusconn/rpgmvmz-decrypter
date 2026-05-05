@@ -17,8 +17,6 @@ use crate::{
 
 use self::plan::Plan;
 
-pub use system_json::{InvalidEncryptionKeyError, ParseError as ParseSystemJsonError};
-
 pub fn decrypt(game_dir: &Path) -> Result<(), DecryptionError> {
     let (path, content) = read_system_json(game_dir)?;
 
@@ -118,7 +116,7 @@ pub enum DecryptionError {
     ParseSystemJson {
         path: PathBuf,
         #[source]
-        source: ParseSystemJsonError,
+        source: system_json::ParseError,
     },
 
     #[error("failed to scan({path:?}): {source}")]

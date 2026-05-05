@@ -3,7 +3,7 @@ mod error;
 
 use std::{env, path::Path, process};
 
-use rpgmvmz_decrypter::filesystem;
+use rpgmvmz_decrypter::decrypt_game;
 
 use self::{args::Args, error::AppError};
 
@@ -20,6 +20,6 @@ fn main() {
 }
 
 fn run(game_dir: &Path) -> Result<(), AppError> {
-    filesystem::decrypt(game_dir)?;
+    decrypt_game(game_dir)?;
     Ok(())
 }
