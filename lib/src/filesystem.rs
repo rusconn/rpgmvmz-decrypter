@@ -37,7 +37,7 @@ pub fn decrypt(game_dir: &Path) -> Result<(), DecryptionError> {
         })?
         .into_par_iter()
         .filter_map(Plan::new)
-        .try_for_each(|plan| do_decrypt(&plan, &system_json.encryption_key))?;
+        .try_for_each(|plan| do_decrypt(&plan, system_json.get_encryption_key()))?;
 
     system_json.mark_as_unencrypted();
 

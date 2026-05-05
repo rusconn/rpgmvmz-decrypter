@@ -8,7 +8,7 @@ use crate::encryption_key::{self, EncryptionKey};
 pub use encryption_key::ParseError as InvalidEncryptionKeyError;
 
 pub struct SystemJson {
-    pub encryption_key: EncryptionKey,
+    encryption_key: EncryptionKey,
     content: Map<String, Value>,
 }
 
@@ -52,6 +52,10 @@ impl SystemJson {
     pub fn mark_as_unencrypted(&mut self) {
         self.content["hasEncryptedAudio"] = Value::Bool(false);
         self.content["hasEncryptedImages"] = Value::Bool(false);
+    }
+
+    pub fn get_encryption_key(&self) -> &EncryptionKey {
+        &self.encryption_key
     }
 }
 
