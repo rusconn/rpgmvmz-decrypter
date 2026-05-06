@@ -4,13 +4,13 @@ A command-line tool to decrypt encrypted assets in RPG Maker MV/MZ games.
 
 ## Install
 
-```shell
+```sh
 cargo install --git https://github.com/rusconn/rpgmvmz-decrypter.git
 ```
 
 ## Usage
 
-```shell
+```sh
 decvz <game_dir>
 ```
 
