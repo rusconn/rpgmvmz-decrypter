@@ -10,6 +10,7 @@ system_json = ["dep:serde_json"]
 
 [dependencies]
 hex = "0.4.3"
+hex-literal = "1.1.0"
 thiserror = "2.0.17"
 
 # filesystem
