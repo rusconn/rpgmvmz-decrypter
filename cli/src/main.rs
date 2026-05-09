@@ -1,11 +1,8 @@
-mod args;
-mod error;
-
 use std::{env, path::Path, process};
 
 use rpgmvmz_decrypter::decrypt_game;
 
-use {args::Args, error::AppError};
+use rpgmvmz_decrypter_cli::{AppError, Args};
 
 fn main() {
     let args = Args::parse(env::args()).unwrap_or_else(|e| {

@@ -1,11 +1,11 @@
 use std::{env, path::PathBuf};
 
-pub(crate) struct Args {
-    pub(crate) game_dir: PathBuf,
+pub struct Args {
+    pub game_dir: PathBuf,
 }
 
 impl Args {
-    pub(crate) fn parse(mut args: env::Args) -> Result<Self, String> {
+    pub fn parse(mut args: env::Args) -> Result<Self, String> {
         args.next();
 
         let game_dir = args

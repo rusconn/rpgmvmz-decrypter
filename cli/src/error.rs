@@ -5,7 +5,7 @@ use rpgmvmz_decrypter::{
 };
 
 #[derive(Debug, Error)]
-pub(crate) enum AppError {
+pub enum AppError {
     #[error("{}", show_decrypt_game_error(.0))]
     FileSystemDecryption(#[from] DecryptGameError),
 }
