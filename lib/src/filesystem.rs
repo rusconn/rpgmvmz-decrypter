@@ -15,7 +15,7 @@ use crate::{
     system_json::{self, SystemJson},
 };
 
-use self::plan::Plan;
+use plan::Plan;
 
 pub fn decrypt(game_dir: &Path) -> Result<(), DecryptionError> {
     let (path, content) = read_system_json(game_dir)?;

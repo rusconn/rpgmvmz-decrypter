@@ -2,9 +2,9 @@ mod decrypted_view;
 
 use thiserror::Error;
 
-use crate::encryption_key::EncryptionKey;
+use crate::EncryptionKey;
 
-use self::decrypted_view::DecryptedView;
+use decrypted_view::DecryptedView;
 
 pub struct Encrypted(Vec<u8>);
 

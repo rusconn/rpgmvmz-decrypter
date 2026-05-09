@@ -1,7 +1,7 @@
 mod encrypted;
 mod encryption_key;
 
-pub use self::{
+pub use {
     encrypted::{Encrypted, InvalidEncryptedBytesError},
     encryption_key::{EncryptionKey, ParseError as ParseEncryptionKeyError},
 };
