@@ -1,4 +1,5 @@
 mod plan;
+mod system_json;
 
 use std::{
     fs, io,
@@ -9,20 +10,12 @@ use rayon::prelude::*;
 use thiserror::Error;
 use walkdir::WalkDir;
 
-use crate::{
-    Encrypted, encrypted,
-    encryption_key::EncryptionKey,
-    system_json::{self, SystemJson},
-};
+use crate::{Encrypted, encrypted, encryption_key::EncryptionKey, system_json as mem_system_json};
 
-use plan::Plan;
+use {plan::Plan, system_json::SystemJson};
 
 pub fn decrypt(game_dir: &Path) -> Result<(), DecryptionError> {
-    let (path, content) = read_system_json(game_dir)?;
-
-    let mut system_json = content
-        .parse::<SystemJson>()
-        .map_err(|source| DecryptionError::ParseSystemJson { path: path.clone(), source })?;
+    let mut system_json = SystemJson::new(game_dir)?;
 
     WalkDir::new(game_dir)
         .into_iter()
@@ -37,33 +30,7 @@ pub fn decrypt(game_dir: &Path) -> Result<(), DecryptionError> {
         .filter_map(Plan::new)
         .try_for_each(|plan| do_decrypt(&plan, system_json.get_encryption_key()))?;
 
-    system_json.mark_as_unencrypted();
-
-    write_system_json(&path, &system_json)
-}
-
-fn read_system_json(game_dir: &Path) -> Result<(PathBuf, String), DecryptionError> {
-    if !game_dir.exists() {
-        return Err(DecryptionError::NotExists(game_dir.into()));
-    }
-    if !game_dir.is_dir() {
-        return Err(DecryptionError::NotADirectory(game_dir.into()));
-    }
-
-    let mv_path = game_dir.join("www").join("data").join("System.json");
-    let mz_path = game_dir.join("data").join("System.json");
-
-    let system_json_path = [mv_path, mz_path]
-        .into_iter()
-        .find(|p| p.exists())
-        .ok_or(DecryptionError::SystemJsonNotFound)?;
-
-    fs::read_to_string(&system_json_path) //
-        .map_err(|source| DecryptionError::ReadSystemJson {
-            path: system_json_path.clone(),
-            source,
-        })
-        .map(|s| (system_json_path, s))
+    system_json.save_as_unencrypted()
 }
 
 fn do_decrypt(plan: &Plan, encryption_key: &EncryptionKey) -> Result<(), DecryptionError> {
@@ -94,14 +61,6 @@ fn do_decrypt(plan: &Plan, encryption_key: &EncryptionKey) -> Result<(), Decrypt
         })
 }
 
-fn write_system_json(path: &Path, system_json: &SystemJson) -> Result<(), DecryptionError> {
-    fs::write(path, system_json.to_string()) //
-        .map_err(|source| DecryptionError::MarkSystemJsonAsUnencrypted {
-            path: path.to_path_buf(),
-            source,
-        })
-}
-
 #[derive(Debug, Error)]
 pub enum DecryptionError {
     #[error("{0} not exists")]
@@ -124,7 +83,7 @@ pub enum DecryptionError {
     ParseSystemJson {
         path: PathBuf,
         #[source]
-        source: system_json::ParseError,
+        source: mem_system_json::ParseError,
     },
 
     #[error("failed to scan({path:?}): {source}")]
