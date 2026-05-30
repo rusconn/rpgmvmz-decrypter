@@ -20,7 +20,7 @@ pub fn decrypt(game_dir: &Path) -> Result<(), DecryptionError> {
     WalkDir::new(game_dir)
         .into_iter()
         .collect::<Result<Vec<_>, _>>()
-        .map_err(|e| DecryptionError::Scan {
+        .map_err(|e| DecryptionError::ScanDirectory {
             path: e.path().map(Path::to_path_buf),
             source: e
                 .into_io_error()
@@ -30,7 +30,9 @@ pub fn decrypt(game_dir: &Path) -> Result<(), DecryptionError> {
         .filter_map(Plan::new)
         .try_for_each(|plan| do_decrypt(&plan, system_json.get_encryption_key()))?;
 
-    system_json.save_as_unencrypted()
+    system_json.save_as_unencrypted()?;
+
+    Ok(())
 }
 
 fn do_decrypt(plan: &Plan, encryption_key: &EncryptionKey) -> Result<(), DecryptionError> {
@@ -64,10 +66,10 @@ fn do_decrypt(plan: &Plan, encryption_key: &EncryptionKey) -> Result<(), Decrypt
 #[derive(Debug, Error)]
 pub enum DecryptionError {
     #[error("{0} not exists")]
-    NotExists(PathBuf),
+    PathNotExists(PathBuf),
 
     #[error("{0} is not a directory")]
-    NotADirectory(PathBuf),
+    PathIsNotADirectory(PathBuf),
 
     #[error("System.json not found")]
     SystemJsonNotFound,
@@ -87,7 +89,7 @@ pub enum DecryptionError {
     },
 
     #[error("failed to scan({path:?}): {source}")]
-    Scan {
+    ScanDirectory {
         path: Option<PathBuf>,
         #[source]
         source: io::Error,
@@ -127,4 +129,34 @@ pub enum DecryptionError {
         #[source]
         source: io::Error,
     },
+}
+
+impl From<system_json::NewError> for DecryptionError {
+    fn from(value: system_json::NewError) -> Self {
+        match value {
+            system_json::NewError::PathNotExists(path_buf) => {
+                DecryptionError::PathNotExists(path_buf)
+            }
+            system_json::NewError::PathIsNotADirectory(path_buf) => {
+                DecryptionError::PathIsNotADirectory(path_buf)
+            }
+            system_json::NewError::SystemJsonNotFound => DecryptionError::SystemJsonNotFound,
+            system_json::NewError::ReadSystemJson { path, source } => {
+                DecryptionError::ReadSystemJson { path, source }
+            }
+            system_json::NewError::ParseSystemJson { path, source } => {
+                DecryptionError::ParseSystemJson { path, source }
+            }
+        }
+    }
+}
+
+impl From<system_json::SaveError> for DecryptionError {
+    fn from(value: system_json::SaveError) -> Self {
+        match value {
+            system_json::SaveError::Io { path, source } => {
+                DecryptionError::MarkSystemJsonAsUnencrypted { path, source }
+            }
+        }
+    }
 }

@@ -12,10 +12,10 @@ pub enum AppError {
 
 fn show_decrypt_game_error(e: &DecryptGameError) -> String {
     match e {
-        DecryptGameError::NotExists(path) => {
+        DecryptGameError::PathNotExists(path) => {
             format!("specified path does not exist: {}", path.display())
         }
-        DecryptGameError::NotADirectory(path) => {
+        DecryptGameError::PathIsNotADirectory(path) => {
             format!("specified path is not a directory: {}", path.display())
         }
         DecryptGameError::SystemJsonNotFound => "System.json was not found".into(),
@@ -29,7 +29,7 @@ fn show_decrypt_game_error(e: &DecryptGameError) -> String {
                 show_parse_system_json_error(source)
             )
         }
-        DecryptGameError::Scan { path, source } => match path {
+        DecryptGameError::ScanDirectory { path, source } => match path {
             Some(path) => {
                 format!("failed to scan {}: {source}", path.display())
             }
