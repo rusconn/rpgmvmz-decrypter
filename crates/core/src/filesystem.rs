@@ -74,56 +74,56 @@ pub enum DecryptionError {
     #[error("System.json not found")]
     SystemJsonNotFound,
 
-    #[error("failed to read System.json({path}): {source}")]
+    #[error("failed to read System.json({path})")]
     ReadSystemJson {
         path: PathBuf,
         #[source]
         source: io::Error,
     },
 
-    #[error("failed to parse System.json({path}): {source}")]
+    #[error("failed to parse System.json({path})")]
     ParseSystemJson {
         path: PathBuf,
         #[source]
         source: mem_system_json::ParseError,
     },
 
-    #[error("failed to scan({path:?}): {source}")]
+    #[error("failed to scan({path:?})")]
     ScanDirectory {
         path: Option<PathBuf>,
         #[source]
         source: io::Error,
     },
 
-    #[error("failed to read encrypted file({path}): {source}")]
+    #[error("failed to read encrypted file({path})")]
     ReadEncryptedFile {
         path: PathBuf,
         #[source]
         source: io::Error,
     },
 
-    #[error("failed to decrypt file({path}): {source}")]
+    #[error("failed to decrypt file({path})")]
     InvalidEncryptedFile {
         path: PathBuf,
         #[source]
         source: encrypted::InvalidEncryptedBytesError,
     },
 
-    #[error("failed to write decrypted file({path}): {source}")]
+    #[error("failed to write decrypted file({path})")]
     WriteDecryptedFile {
         path: PathBuf,
         #[source]
         source: io::Error,
     },
 
-    #[error("failed to remove encrypted file({path}): {source}")]
+    #[error("failed to remove encrypted file({path})")]
     RemoveEncryptedFile {
         path: PathBuf,
         #[source]
         source: io::Error,
     },
 
-    #[error("failed to mark System.json as unencrypted({path}): {source}")]
+    #[error("failed to mark System.json as unencrypted({path})")]
     MarkSystemJsonAsUnencrypted {
         path: PathBuf,
         #[source]

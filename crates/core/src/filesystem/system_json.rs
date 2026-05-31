@@ -71,14 +71,14 @@ pub enum NewError {
     #[error("System.json not found")]
     SystemJsonNotFound,
 
-    #[error("failed to read System.json({path}): {source}")]
+    #[error("failed to read System.json({path})")]
     ReadSystemJson {
         path: PathBuf,
         #[source]
         source: io::Error,
     },
 
-    #[error("failed to parse System.json({path}): {source}")]
+    #[error("failed to parse System.json({path})")]
     ParseSystemJson {
         path: PathBuf,
         #[source]
@@ -88,7 +88,7 @@ pub enum NewError {
 
 #[derive(Debug, Error)]
 pub enum SaveError {
-    #[error("failed to save System.json as unencrypted({path}): {source}")]
+    #[error("failed to save System.json as unencrypted({path})")]
     Io {
         path: PathBuf,
         #[source]

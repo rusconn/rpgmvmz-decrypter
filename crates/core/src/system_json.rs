@@ -68,7 +68,7 @@ pub enum ParseError {
     #[error("encryptionKey is not a string")]
     EncryptionKeyIsNotAString,
 
-    #[error("invalid encryptionKey({encryption_key}): {source}")]
+    #[error("invalid encryptionKey({encryption_key})")]
     InvalidEncryptionKey {
         encryption_key: String,
         #[source]
