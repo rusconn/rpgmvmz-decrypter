@@ -184,7 +184,6 @@ name = "rpgmvmz-decrypter-cli"
 version = "0.1.0"
 dependencies = [
  "rpgmvmz-decrypter",
- "thiserror",
 ]
 
 [[package]]

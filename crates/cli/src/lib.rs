@@ -1,4 +1,4 @@
 mod args;
-mod error;
+mod display;
 
-pub use {args::*, error::*};
+pub use {args::*, display::*};
